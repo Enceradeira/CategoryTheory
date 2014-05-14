@@ -4,15 +4,19 @@ open NUnit.Framework
 
  // Sets and Functions
 
-let SetOfNumbers() = Seq.initInfinite(fun i->i)
+let SetOfNumbers = Seq.initInfinite(fun i->i)
  
-let rec SetOfEvenNumbers() = seq {  
-                                yield 0
-                                for n in SetOfEvenNumbers() do yield n+2
-                                  }
+let rec SetOfEvenNumbers = seq {  
+                                    for n in SetOfNumbers do
+                                        let candidateNumbers = Seq.takeWhile(fun m->m<=n/2) SetOfNumbers
+                                        if Seq.exists(fun m->2*m=n) candidateNumbers then yield n     
+                                 }
                              
-let SetOfOddNumbers() = Seq.map(fun i->i+1) (SetOfEvenNumbers())
-
+let SetOfOddNumbers = seq {
+                             for n in SetOfNumbers do
+                                 let evenNumbers = Seq.takeWhile(fun m->m<=n) SetOfEvenNumbers
+                                 if not (Seq.exists(fun m->m = n) evenNumbers) then yield n     
+                          }
 
 // Tests
 [<TestFixture>]
@@ -20,7 +24,7 @@ type SetsAndFunctionsFixture() = class
     
         [<Test>]
         member this.SetOfAllEvenNumbers() =
-            let evenNumbersFrom0To10 = Seq.take 10 (SetOfEvenNumbers())
+            let evenNumbersFrom0To10 = Seq.take 10 SetOfEvenNumbers
             Assert.That(evenNumbersFrom0To10, Has.No.Member 1)
             Assert.That(evenNumbersFrom0To10, Has.Member 2)
             Assert.That(evenNumbersFrom0To10, Has.No.Member 3)
@@ -31,7 +35,7 @@ type SetsAndFunctionsFixture() = class
 
         [<Test>]
         member this.SetOfOddNumbers() = 
-            let oddNumbersFrom0To10 = Seq.take 10 (SetOfOddNumbers())
+            let oddNumbersFrom0To10 = Seq.take 10 SetOfOddNumbers
             Assert.That(oddNumbersFrom0To10, Has.Member 1)
             Assert.That(oddNumbersFrom0To10, Has.No.Member 2)
             Assert.That(oddNumbersFrom0To10, Has.Member 3)
